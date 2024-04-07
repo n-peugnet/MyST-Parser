@@ -48,6 +48,34 @@ class MystParser(SphinxParser):
     def get_transforms(self):
         return super().get_transforms() + [ResolveAnchorIds]
 
+    def parse_inline(self, inputstring: str, document: nodes.document) -> None:
+        """Parse source text.
+
+        :param inputstring: The source string to parse
+        :param document: The root docutils node to add AST elements to
+
+        """
+        # get the global config
+        config: MdParserConfig = document.settings.env.myst_config
+
+        # update the global config with the file-level config
+        try:
+            topmatter = read_topmatter(inputstring)
+        except TopmatterReadError:
+            pass  # this will be reported during the render
+        else:
+            if topmatter:
+                warning = lambda wtype, msg: create_warning(  # noqa: E731
+                    document, msg, wtype, line=1, append_to=document
+                )
+                config = merge_file_level(config, topmatter, warning)
+
+        parser = create_md_parser(config, SphinxRenderer)
+        parser.options["document"] = document
+        parser.renderInline(inputstring)
+        p = nodes.paragraph(inputstring, '', *document.children)
+        document.children = [p]
+
     def parse(self, inputstring: str, document: nodes.document) -> None:
         """Parse source text.
 
