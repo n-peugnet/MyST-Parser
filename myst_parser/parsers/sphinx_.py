@@ -57,19 +57,6 @@ class MystParser(SphinxParser):
         """
         # get the global config
         config: MdParserConfig = document.settings.env.myst_config
-
-        # update the global config with the file-level config
-        try:
-            topmatter = read_topmatter(inputstring)
-        except TopmatterReadError:
-            pass  # this will be reported during the render
-        else:
-            if topmatter:
-                warning = lambda wtype, msg: create_warning(  # noqa: E731
-                    document, msg, wtype, line=1, append_to=document
-                )
-                config = merge_file_level(config, topmatter, warning)
-
         parser = create_md_parser(config, SphinxRenderer)
         parser.options["document"] = document
         parser.renderInline(inputstring)
